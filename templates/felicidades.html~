@@ -12,10 +12,10 @@
         <script src="{{ url_for('static', filename='modernizr-2.6.2-respond-1.1.0.min.js') }}"></script>
 
 	<style>
-	.tftable {font-size:14px;color:#333333;width:100%;border-width: 1px;border-color: #729ea5;border-collapse: collapse;}
-	.tftable th {font-size:14px;background-color:#acc8cc;border-width: 1px;padding: 8px;border-style: solid;border-color: #729ea5;text-align:center;}
+	.tftable {font-size:14px;color:#333333;width:100%;border-width: 1px;border-color: #ebab3a;border-collapse: collapse;}
+	.tftable th {font-size:14px;background-color:#e6983b;border-width: 1px;padding: 8px;border-style: solid;border-color: #ebab3a;text-align:center;}
 	.tftable tr {background-color:#ffffff;}
-	.tftable td {font-size:13px;border-width: 1px;padding: 8px;border-style: solid;border-color: #729ea5;}
+	.tftable td {font-size:13px;border-width: 1px;padding: 8px;border-style: solid;border-color: #ebab3a;}
 	.tftable tr:hover {background-color:#ffff99;}
 
 	</style>
@@ -38,6 +38,7 @@
 		<tr>
 		  <th>Nombre de la Variable</th>
 		  <th>Valor</th>
+		  <th>Alcance</th>
 		</tr>
 
 		{% for t in dinamico %}
@@ -57,6 +58,7 @@
 		<tr>
 		  <th>Nombre de la Variable</th>
 		  <th>Tipo de Dato</th>
+		  <th>Alcance</th>
 		</tr>
 
 		{% for t in estatico %}
