@@ -1,0 +1,259 @@
+##lista=[["x",3,"int"],["z",5,"int"],["y",'false',"bool"]]
+import re
+global lista
+lista=[]
+
+def leersml():
+    archi=open('Archivo.sml','r+')
+    linea=archi.readline()
+##     analizador(linea)
+##    dividirNueva(linea)
+    while linea!="":
+##        analizador(linea)
+        dividirNueva(linea)
+        linea=archi.readline()        
+    archi.close()
+    print(lista)
+    return agrupar(lista,1,[],[]) 
+##    print("AGRUPADA",agrupada)
+##    return agrupada
+
+def dividirNueva(linea):
+    temp=re.split(' |;|\n|(=)*',linea)   #|(-)*|(+)*|(*)*|(<)*|(>)*
+    try:
+        while True:
+            temp.remove(None)
+    except ValueError:
+            pass
+    try:
+        while True:
+            temp.remove("\n")
+    except ValueError:
+        pass
+    contador=temp.count('')
+    while contador !=0:
+        temp.remove('')
+        contador -=1
+    lista.append(temp)
+##    print(lista)
+        
+        
+##def analizador(listasml,var_temp):
+##    listaNueva=[]
+##    var_temp=''
+##    if listasml==[]:
+##        return 
+##    elif listasml[0][0]=='if':    
+##        return AnalizaIf(listasml,var_temp)
+##    elif listasml[0][0]=='let':
+##        return AnalizaLet(listasml)                    
+####    elif line[0]=='\n' or line[0]==';':
+####        return listaNueva
+##    elif listasml[0]==' ':
+##        return analizador(line[1:],var_temp)
+##    elif listasml[0][0]=='val' or line[0][0].isalpha():
+##        return analizaVal([listasml[0][1:]]+[listasml[1:],'')
+##    else:
+##        return 'error'
+
+
+def agrupar(matriz,ide,valActual,agrupada2):
+    print(matriz)
+    while matriz!=[]:
+        agrupada=[]
+        if ide==1: #val
+            vector=matriz[0]
+            if vector!=[] and vector[0]=='val':
+                valActual += [vector[0]]
+                vector=vector[1:]
+                matriz[0]=matriz[0][1:]
+
+            while vector!=[] and vector[0] not in {'val','let','if'}: ## vector[0]!='val' or vector[0]!='let' or vector[0]!='if': ##
+                valActual += [vector[0]]                
+                vector=vector[1:]
+                matriz[0]=matriz[0][1:]
+##                print("Vector:  ",vector)
+            print("valActual:  ",valActual)
+            if vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] in {'val','let','if'}:
+                agrupada+=[valActual]
+                if matriz[1][0]=='val':
+##                    print("deberia entrar aqui")
+                    matriz = matriz[1:]
+##                    print("matriz: ",matriz)
+                    return agrupar(matriz,1,[],agrupada2+agrupada)
+                elif matriz[1][0]=='let':
+                    matriz = matriz[1:]
+                    agrupada +=[agrupar(matriz,2,[])]
+                elif matriz[1][0]=='if':
+                    matriz = matriz[1:]
+                    agrupada +=[agrupar(matriz,3,[])]
+                    
+            elif vector == [] and len(matriz)>=2 and matriz[1][0] not in {'val','let','if'}:
+                matriz=matriz[1:]
+                return agrupar(matriz,1,valActual,agrupada2+agrupada)
+                
+            elif vector != [] and vector[0] in {'val','let','if'}:
+                agrupada+=[valActual]
+                if vector[0]=='val':
+                    return agrupar(matriz,1,[],agrupada2+[agrupada]) 
+                elif vector[0]=='let':
+                    agrupada +=[agrupar(matriz,2,[])]
+                elif vector[0]=='if':
+                    agrupada +=[agrupar(matriz,3,[])]
+            elif len(matriz)==1 and matriz[0]==[]:
+                matriz=matriz[1:]
+                agrupada2+=[valActual]
+                return agrupada2
+                            
+        elif ide==2: #let
+            print ("el 2")
+        elif ide==3: #if
+            print ("el 2")
+    return agrupada2
+
+    
+
+def analizaVal(line,variable):
+    if len(line[0])>1:
+        if line[0].isdigit():                                           
+            agregardatos(lista,var_temp,int(line[0]),'int')
+            return analizaVal(line[1:],var_temp)
+        elif line[0][0].isalpha():
+            if line[0][0]=='true' or line[0][0]=='false':
+                agregardatos(lista,var_temp,line[0],'bool')
+                var_temp=''
+                encontrarValor(line[1:],var_temp)
+            else:                    
+                if line[0].find('='):
+                    return analizaVal([line[0][line[0].find('='):]]+[line[1:]],line[0][:line[0].find('=')])
+                else:
+                    linear=line[0][0]
+                    while linear.isalpha():
+                        var_temp=var_temp+linear
+                        linear=line[0][1:]
+                    print(linear)
+                    return analizaVal(line,var_temp)
+                
+        elif line[0][0]=='=':
+            if line[0][1].isdigit():
+                agregardatos(lista,variable,line[0][1],'int')
+                variable=''
+                encontrarValor(line[2:],variable)
+##            elif line[0].find('+') or line[0].find('/') or line[0].find('*') or line[0].find('-') or line[0].find('div') or line[0].find('mod'):
+##                while lista[0]!='' or lista[0]!=';':
+##                    if lista[0][0].isalpha():
+                        
+##                elif line[1]=='[':
+##                    AnalizaLista(line[1:])
+##                elif line[1]=='(':
+##                    AnalizaTupla(line[1:])
+##                else:
+##                    return 'Error: Valores incorrectos.'
+        else:
+            return 'Error: No son valores de SML.'
+    elif len(line[0])==1:
+        if line[0].isdigit():
+            agregardatos(lista,var_temp,int(line[0]),'int')
+            analizaVal(line[1:],var_temp)
+        elif line[0].isalpha():
+            analizaVal(line[1:],line[0])
+        else:
+            if line[0]=='+' or line[0]=='/' or line[0]=='-' or line[0]=='*':
+                return 'Falta trabajar valores de operaciones.'
+            elif line[0].find('='):
+                return 'hola'
+                
+            else:
+                return 'Error: Este elemento no es valido en SML.'
+    else:
+        return 'Ya termino'
+
+
+
+
+
+
+
+
+
+
+
+            
+        
+
+
+
+
+'x=2'
+     
+                    
+def AnalizaIf(line):
+    return 'Hacer AnalizaIf'
+def AnalizaElse(line):
+    return 'Hacer AnalizaElse'
+def AnalizaLet(line):
+    return 'Hacer AnalizaLet'
+def AnalizaLista(line):
+    return 'Hacer AnalizaLista'
+def AnalizaTupla(line):
+    return 'Hacer AnalizaTupla'
+
+def agregardatos(lista,variable,valor,tipo):
+     temp_list=[variable,valor,tipo]
+     lista.append(temp_list)
+     print(lista)
+## resuelve operaciones elementales
+def operacion(valor1,operando,valor2):
+     if (isinstance(valor1,int) and isinstance(valor2,int)) : 
+          if operando=="+":
+               return (valor1+valor2)
+          elif operando=="-":
+               return (valor1-valor2)
+          elif operando=="*":
+               return (valor1*valor2)
+          elif operando=="/":
+               return (valor1/valor2)
+          else:
+               print ("Operacion no permitida")
+     elif (isinstance(valor1,int) and verificar_int(valor2)):
+          if operando=="+":
+               return (valor1+(obtener(valor2)))
+          elif operando=="-":
+               return (valor1-(obtener(valor2)))
+          elif operando=="*":
+               return (valor1*(obtener(valor2)))
+          elif operando=="/":
+               return (valor1/(obtener(valor2)))
+          else:
+               print ("Operacion no permitida")
+     elif (verificar_int(valor1) and isinstance(valor2,int)):
+          if operando=="+":
+               return ((obtener(valor1))+valor2)
+          elif operando=="-":
+               return ((obtener(valor1))-valor2)
+          elif operando=="*":
+               return ((obtener(valor1))*valor2)
+          elif operando=="/":
+               return ((obtener(valor1))/valor2)
+          else:
+               print ("Operacion no permitida")
+     else:
+          print ("operacion fallida")
+       
+          
+
+
+
+def verificar_int(valor):
+     if lista==[]:
+          return False
+     for e in lista:
+          if ((e[0]==valor) and (e[2]=="int")):
+               return True
+     return False
+
+
+def obtener(valor):
+     for e in lista:
+          if (e[0]==valor):
+               return (e[1])
