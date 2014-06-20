@@ -13,16 +13,16 @@
 					Junio del 2014
 __________________________________________________________________________'''
 
-#Imports del framework para la aplicacion web: Flask
+##Imports del framework para la aplicacion web: Flask
 from flask import Flask, request, redirect, url_for, abort, session, render_template, flash
 from werkzeug.utils import secure_filename
 import os
 
-#Configuracion de guardar archivos
+##Configuracion de guardar archivos
 UPLOAD_FOLDER = '/home/josue/TP3_sml'
 ALLOWED_EXTENSIONS = set(['sml'])
 
-#Nombre de la aplicacion: Bumbur
+##Nombre de la aplicacion: Bumbur
 app = Flask("SML")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -35,7 +35,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 #----------------------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------------------------------------
 
-#URL y funcion para home
+##URL y funcion para home
 @app.route('/')
 def home():
 	return render_template('home.html')
@@ -68,13 +68,15 @@ def felicidades():
 			borrarArchivo(nombre)
 			global lista
 			global lista2
+			global dic
 			lista = []
 			lista2 = []
+			dic = {}
 			return render_template('felicidades.html',dinamico=dinamico,estatico=estatico)
 		else:
 			return redirect(url_for('error'))
 	return render_template('felicidades.html')
-
+##
 @app.route('/error', methods=['GET', 'POST'])
 def error():
 	return render_template('error.html')
@@ -91,7 +93,7 @@ def archivoPermitido(nombre):
 	boolean = '.' in nombre and nombre.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 	return boolean
 
-#Funcion para borrar un archivo en uploads despues de ser evaluado
+##Funcion para borrar un archivo en uploads despues de ser evaluado
 def borrarArchivo(nombre):
 	os.remove("/home/josue/TP3_sml/"+nombre)
 
@@ -116,10 +118,12 @@ def leersml(nombre):
     print("Matriz Leida",lista2)
     agrupada = agrupar(lista2,1,[],[])
     print("Agrupada: ",agrupada)
-    transformada = transformar(agrupada)
+    corregida = corregirLets(agrupada)
+    print("Corregida de Lets: ",corregida)
+    transformada = transformar(corregida)
     print("Transformada: ",transformada)
     almacenar(transformada)
-    print("Lista: ",lista)
+##    print("Lista Final: ",lista)
     return lista
     
 def dividirNueva(linea):
@@ -140,9 +144,34 @@ def dividirNueva(linea):
         contador -=1
     lista2.append(temp)
 
-##pasadoFueLet
-##pasadoFueLet = False
-
+def corregirLets(lista):
+##    print("Lista entrante a corregirLets: ",lista)
+    lista2 = []
+    for val in lista:
+##        print("val: ",val)
+        let = []
+        valEnLet = []
+        if val[3] == 'let':
+            let += ['let']
+            val.pop(3)
+            while not val[3] == 'in':
+                valEnLet += [val[3]]
+                val.pop(3)
+            let += [valEnLet]
+            let += ['in']
+            val.pop(3)
+            valEnLet = []
+            indice = 3
+            largo = len(val)
+            while indice != largo:
+                valEnLet += [val[3]]
+                val.pop(3)
+                indice += 1
+            let += [valEnLet]
+            val.insert(3,let)
+        lista2 += [val]
+    return lista2
+        
 def agrupar(matriz,ide,valActual,agrupada2):
 ##    print(matriz)
     while matriz!=[]:
@@ -197,143 +226,47 @@ def agrupar(matriz,ide,valActual,agrupada2):
                 agrupada2+=[valActual]
                 return agrupada2
 
-##        if ide==1: #val
-##
-##            vector=matriz[0]
-##            if vector!=[] and (vector[0]=='val' or vector[0]=='(val'):
-##                valActual += ['val']
-##                vector=vector[1:]
-##                matriz[0]=matriz[0][1:]
-##
-##            while vector!=[] and vector[0] not in {'val','let','if','(val','(let','(if'}: 
-##                valActual += [vector[0]]                
-##                vector=vector[1:]
-##                matriz[0]=matriz[0][1:]
-##                
-##            #termino el val bien, sml bonito
-##            if vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] in {'val','let','if','(val','(let','(if'}:
-##                agrupada+=[valActual]
-##                global pasadoFueLet
-##                if pasadoFueLet:
-##                    pasadoFueLet = False
-##                    if matriz[1][0]=='val' or matriz[1][0]=='(val':
-##                        matriz = matriz[1:]
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,1,[],agrupada2)
-##                    elif matriz[1][0]=='let' or matriz[1][0]=='(let':
-##                        matriz = matriz[1:]
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,2,[],agrupada2)
-##                    elif matriz[1][0]=='if' or matriz[1][0]=='(if':
-##                        matriz = matriz[1:]
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,3,[],agrupada2)
-##                else:
-##                    if matriz[1][0]=='val' or matriz[1][0]=='(val':
-##                        matriz = matriz[1:]
-##                        return agrupar(matriz,1,[],agrupada2+agrupada)
-##                    elif matriz[1][0]=='let' or matriz[1][0]=='(let':
-##                        matriz = matriz[1:]
-##                        return agrupar(matriz,2,[],agrupada2+agrupada)
-##                    elif matriz[1][0]=='if' or matriz[1][0]=='(if':
-##                        matriz = matriz[1:]
-##                        return agrupar(matriz,3,[],agrupada2+agrupada)
-##                    else:
-##                        matriz = [[]]+matriz
-##                        
-##            #No ha terminado el val, sigue en la siguiente linea (lista)     
-##            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] not in {'val','let','if','(val','(let','(if'}:
-##                matriz=matriz[1:]
-##                return agrupar(matriz,1,valActual,agrupada2+agrupada)
-##
-##            #ya termino el val, sigue en la misma linea la siguiente expresion    
-##            elif vector != [] and vector[0] in {'val','let','if','(val','(let','(if'}: #and len(matriz)>1 and matriz[1] != []:
-##                agrupada+=[valActual]
-##                global pasadoFueLet
-##                if pasadoFueLet:
-##                    pasadoFueLet = False
-##                    if vector[0]=='val' or vector[0]=='(val':
-####                        matriz = matriz[1:]
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,1,[],agrupada2)
-##                    elif vector[0]=='let' or vector[0]=='(let':
-####                        matriz = matriz[1:]
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,2,[],agrupada2)
-##                    elif vector[0]=='if' or vector[0]=='(if':
-####                        matriz = matriz[1:]
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,3,[],agrupada2)
-##                else:
-##                    if vector[0]=='val' or vector[0]=='(val':
-####                        matriz = matriz[1:]
-##                        return agrupar(matriz,1,[],agrupada2+agrupada)
-##                    elif vector[0]=='let' or vector[0]=='(let':
-####                        matriz = matriz[1:]
-##                        return agrupar(matriz,2,[],agrupada2+agrupada)
-##                    elif vector[0]=='if' or vector[0]=='(if':
-####                        matriz = matriz[1:]
-##                        return agrupar(matriz,3,[],agrupada2+agrupada)
-####                    else:
-####                        matriz = [[]]+matriz
-##                        
-##            elif len(matriz)==1 and matriz[0]==[]:
-##                matriz=matriz[1:]
-##                if pasadoFueLet:
-##                    agrupada2[-1]+=[valActual]
-##                    apenasDespuesDelLet = False
-##                else:
-##                    agrupada2+=[valActual]
-##                return agrupada2
-##
-##            elif vector != [] and vector[0] in {'val','let','if','(val','(let','(if'}:
-##                agrupada+=[valActual]
-##                global pasadoFueLet
-##                if pasadoFueLet:
-##                    pasadoFueLet = False
-##                    if matriz[0][0]=='val' or matriz[0][0]=='(val':
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,1,[],agrupada2)
-##                    elif matriz[0][0]=='let' or matriz[0][0]=='(let':
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,2,[],agrupada2)
-##                    elif matriz[0][0]=='if' or matriz[0][0]=='(if':
-##                        agrupada2[-1]+=agrupada
-##                        return agrupar(matriz,3,[],agrupada2)
-##                else:
-##                    if matriz[0][0]=='val' or matriz[0][0]=='(val':
-##                        return agrupar(matriz,1,[],agrupada2+agrupada)
-##                    elif matriz[0][0]=='let' or matriz[0][0]=='(let':
-##                        return agrupar(matriz,2,[],agrupada2+agrupada)
-##                    elif matriz[0][0]=='if' or matriz[0][0]=='(if':
-##                        return agrupar(matriz,3,[],agrupada2+agrupada)
-####                    else:
-####                        matriz = [[]]+matriz
-
 ################################################################################################################################################
                             
         elif ide==2: #let
             vector=matriz[0]
             if vector!=[] and (vector[0]=='let' or vector[0]=='(let'):
-                valActual+=[[]]
-                valActual[-1]+= ['let']
-                valActual[-1]+=[[]]
-##                print(valActual)
+                valActual += ['let']
                 vector=vector[1:]
                 matriz[0]=matriz[0][1:]
-                if vector[0]=='val' or vector[0]=='(val':
-                    valActual[-1][-1]+=['val']
-                    vector=vector[1:]
-                    matriz[0]=matriz[0][1:]
-##                    print("If que entra si el vector[0] es val",vector[0])
-            while vector!=[] and vector[0] not in {'val','(val','let','(let','if','(if','in','end','end)'}: ##Mete todo lo que tenga el let hasta antes del in
-                valActual[-1][-1]+=[vector[0]]
+
+            while vector!=[] and vector[0] not in {'end','(end'}:
+                valActual += [vector[0]]                
                 vector=vector[1:]
                 matriz[0]=matriz[0][1:]
-                    
 
-            if vector != [] and vector[0] in {'val','(val','let','(let','if','(if','end','end)'}:
+            if vector!=[] and vector[0] in {'end','(end'}:
+                vector=vector[1:]
+                matriz[0]=matriz[0][1:]
+                
+            #termino el let bien, sml bonito
+            if vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] in {'val','(val','let','(let','if','(if'}:
+                agrupada+=[valActual]
+                if matriz[1][0]=='val' or matriz[1][0]=='(val':
+                    matriz = matriz[1:]
+                    agrupada2+=agrupada
+                    return agrupar(matriz,1,[],agrupada2)
+                elif matriz[1][0]=='let' or matriz[1][0]=='(let':
+                    matriz = matriz[1:]
+                    agrupada2+=agrupada
+                    return agrupar(matriz,2,[],agrupada2)
+                elif matriz[1][0]=='if' or matriz[1][0]=='(if':
+                    matriz = matriz[1:]
+                    agrupada2+=agrupada
+                    return agrupar(matriz,3,[],agrupada2)
 
+            #No ha terminado el let, sigue en la siguiente linea (lista)     
+            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1:
+                matriz=matriz[1:]
+                return agrupar(matriz,2,valActual,agrupada2)
+
+            #ya termino el let, sigue en la misma linea la siguiente expresion    
+            elif vector != [] and vector[0] in {'val','(val','let','(let','if','(if'}:
                 agrupada+=[valActual]
                 if vector[0]=='val' or vector[0]=='(val':
                     agrupada2[-1]+=agrupada
@@ -344,57 +277,93 @@ def agrupar(matriz,ide,valActual,agrupada2):
                 elif vector[0]=='if' or vector[0]=='(if':
                     agrupada2[-1]+=agrupada
                     return agrupar(matriz,3,[],agrupada2)
-                    
-                    
-                    
                 
-            if vector!=[] and vector[0]=='in':
-##                print('Si vector es distinto de vacio y vector[0] es in',vector[0])
-                valActual+=['in']
-                vector=vector[1:]
-                matriz[0]=matriz[0][1:]
-                while vector!=[] and vector[0] not in {'val','(val','let','(let','if','(if'}:
-##                    print(vector[0])
-                    valActual+=[vector[0]]
-                    vector=vector[1:]                        
-                    matriz[0]=matriz[0][1:]
-                    
-            if vector!=[] and (vector[0]=='end' or vector[0]=='end)'):
-                valActual+=['end']
-                vector=vector[1:]
-                matriz[0]=matriz[0][1:]
-                agrupada+=valActual
-                return agrupar(matriz,2,valActual,agrupada2)
-
-                    
-            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1: ## and matriz[1][0]=='in':                    
-                matriz=matriz[1:]
-##                valActual+=[vector[0]]
-                return agrupar(matriz,2,valActual+[],agrupada2)
-
-            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] in {'val','(val','let','(let','if','(if'}:  
-                matriz=matriz[1:]
-                valActual+=[[]]
-##                valActual+=[vector[0]]
-##                    print('in',vector[0])
-                return agrupar(matriz,2,valActual,agrupada2)
-
-
-            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] not in {'val','(val','let','(let','if','(if'}:
-                matriz=matriz[1:]
-
-##                valActual+=[vector[0]]
-##                    print('in',vector[0])
-                return agrupar(matriz,1,valActual,agrupada2)
-            
-
-
             elif len(matriz)==1 and matriz[0]==[]:
                 matriz=matriz[1:]
-                agrupada2+=[valActual]
+                agrupada2[-1]+=[valActual]
                 return agrupada2
-    
             
+##            vector=matriz[0]
+##            if vector!=[] and (vector[0]=='let' or vector[0]=='(let'):
+##                valActual+=[[]]
+##                valActual[-1]+= ['let']
+##                valActual[-1]+=[[]]
+####                print(valActual)
+##                vector=vector[1:]
+##                matriz[0]=matriz[0][1:]
+##                if vector[0]=='val' or vector[0]=='(val':
+##                    valActual[-1][-1]+=['val']
+##                    vector=vector[1:]
+##                    matriz[0]=matriz[0][1:]
+####                    print("If que entra si el vector[0] es val",vector[0])
+##            while vector!=[] and vector[0] not in {'val','(val','let','(let','if','(if','in','end','end)'}: ##Mete todo lo que tenga el let hasta antes del in
+##                valActual[-1][-1]+=[vector[0]]
+##                vector=vector[1:]
+##                matriz[0]=matriz[0][1:]
+##                    
+##
+##            if vector != [] and vector[0] in {'val','(val','let','(let','if','(if','end','end)'}:
+##
+##                agrupada+=[valActual]
+##                if vector[0]=='val' or vector[0]=='(val':
+##                    agrupada2[-1]+=agrupada
+##                    return agrupar(matriz,1,[],agrupada2)
+##                elif vector[0]=='let' or vector[0]=='(let':
+##                    agrupada2[-1]+=agrupada
+##                    return agrupar(matriz,2,[],agrupada2)
+##                elif vector[0]=='if' or vector[0]=='(if':
+##                    agrupada2[-1]+=agrupada
+##                    return agrupar(matriz,3,[],agrupada2)
+##                    
+##                    
+##                    
+##                
+##            if vector!=[] and vector[0]=='in':
+####                print('Si vector es distinto de vacio y vector[0] es in',vector[0])
+##                valActual+=['in']
+##                vector=vector[1:]
+##                matriz[0]=matriz[0][1:]
+##                while vector!=[] and vector[0] not in {'val','(val','let','(let','if','(if'}:
+####                    print(vector[0])
+##                    valActual+=[vector[0]]
+##                    vector=vector[1:]                        
+##                    matriz[0]=matriz[0][1:]
+##                    
+##            if vector!=[] and (vector[0]=='end' or vector[0]=='end)'):
+##                valActual+=['end']
+##                vector=vector[1:]
+##                matriz[0]=matriz[0][1:]
+##                agrupada+=valActual
+##                return agrupar(matriz,2,valActual,agrupada2)
+##
+##                    
+##            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1: ## and matriz[1][0]=='in':                    
+##                matriz=matriz[1:]
+####                valActual+=[vector[0]]
+##                return agrupar(matriz,2,valActual+[],agrupada2)
+##
+##            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] in {'val','(val','let','(let','if','(if'}:  
+##                matriz=matriz[1:]
+##                valActual+=[[]]
+####                valActual+=[vector[0]]
+####                    print('in',vector[0])
+##                return agrupar(matriz,2,valActual,agrupada2)
+##
+##
+##            elif vector == [] and len(matriz)>=2 and len(matriz[1])>= 1 and matriz[1][0] not in {'val','(val','let','(let','if','(if'}:
+##                matriz=matriz[1:]
+##
+####                valActual+=[vector[0]]
+####                    print('in',vector[0])
+##                return agrupar(matriz,1,valActual,agrupada2)
+##            
+##
+##
+##            elif len(matriz)==1 and matriz[0]==[]:
+##                matriz=matriz[1:]
+##                agrupada2+=[valActual]
+##                return agrupada2
+    
 ################################################################################################################################################
 
         elif ide==3: #if
@@ -462,11 +431,11 @@ def corregirLista(string):
     string = string.replace(')','&')
     string = string.replace('-','`')
 
-    print(string)
+##    print(string)
     
     temp=re.split(',|(=)*(>)*(<)*(`)*(div)*(EEE)*(QQQ)*([)*(])*(mod)*(hd)*(tl)*(::)*(!)*(@)*(%)*(&)*',string)
 
-    print(temp)
+##    print(temp)
     
     try:
         while True:
@@ -494,11 +463,27 @@ def corregirLista(string):
             final.remove('')
     except ValueError:
             pass
-    print(final)
-    if final[0][0] == '[':
-            final[0] = final[0][1:]
-            final[-1] = final[-1][:-1]
-    print(final)
+
+    l = []
+    act = False
+    indice = 1
+    estar = 0
+    for i in final[1:-1]:
+        if act and i[-1] != ']':
+            l+= [i]
+            final.pop(indice)
+        elif i[0] == '[':
+            l += [i[1:]]
+            act = True
+            estar = indice
+            final.pop(indice)
+        elif i[-1] == ']':
+            l += [i[:-1]]
+            act = False
+            final.pop(indice-1)
+            final.insert(estar,l)
+            l= []
+        indice += 1
     
     return final
 
@@ -513,12 +498,9 @@ def transformar(lista): #recursivo
         if isinstance(lista[0],list):
             l1 = transformar(lista[0])
             l2 = transformar(lista[1:])
-            print("l1: ",l1)
-            print("l2: ",l2)
             if l1 == []:
                 return l2
             elif l2 == []:
-                print("Cuando l2 es vacia, l1 es: ",l1)
                 return l1
             else:
                 if masDe2NivelesDeAnidacion(l2):
@@ -555,57 +537,23 @@ def transformar(lista): #recursivo
                     return resultado
             else:
                 resultado += [transformar(lista[0])]
+                lista = lista[1:]
+                if lista != []:
+                    for e in lista:
+                        if isinstance(e,list):
+                            for i in e:
+                                valorComplejo += i
+                            resultado += [corregirLista(valorComplejo)]
+                            valorComplejo = ""
+                        else:
+                            resultado += [e]
                 return resultado
-
-##def analizaVal(line,variable):
-##    if len(line[0])>1:
-##        if line[0].isdigit():                                           
-##            agregardatos(lista,var_temp,int(line[0]),'int')
-##            return analizaVal(line[1:],var_temp)
-##        elif line[0][0].isalpha():
-##            if line[0][0]=='true' or line[0][0]=='false':
-##                agregardatos(lista,var_temp,line[0],'bool')
-##                var_temp=''
-##                encontrarValor(line[1:],var_temp)
-##            else:                    
-##                if line[0].find('='):
-##                    return analizaVal([line[0][line[0].find('='):]]+[line[1:]],line[0][:line[0].find('=')])
-##                else:
-##                    linear=line[0][0]
-##                    while linear.isalpha():
-##                        var_temp=var_temp+linear
-##                        linear=line[0][1:]
-##                    print(linear)
-##                    return analizaVal(line,var_temp)
-##                
-##        elif line[0][0]=='=':
-##            if line[0][1].isdigit():
-##                agregardatos(lista,variable,line[0][1],'int')
-##                variable=''
-##                encontrarValor(line[2:],variable)
-##        else:
-##            return 'Error: No son valores de SML.'
-##    elif len(line[0])==1:
-##        if line[0].isdigit():
-##            agregardatos(lista,var_temp,int(line[0]),'int')
-##            analizaVal(line[1:],var_temp)
-##        elif line[0].isalpha():
-##            analizaVal(line[1:],line[0])
-##        else:
-##            if line[0]=='+' or line[0]=='/' or line[0]=='-' or line[0]=='*':
-##                return 'Falta trabajar valores de operaciones.'
-##            elif line[0].find('='):
-##                return 'hola'
-##                
-##            else:
-##                return 'Error: Este elemento no es valido en SML.'
-##    else:
-##        return 'Ya termino'
 
      
 global lista
 ##lista=[["x",3,"int","global","int"],["z",5,"int","global","int"],["y","false","bool","global","bool"],["e",[5,4,3],"int list","global","list"],["f",[8,9,10],"int list","global","list"],["g",[3,4,9],"int list","global","list"],["k",("false",5,3),"(bool*int*int)","global","tuple"]]
 lista = []
+globales = {}
 
 #Revisar las listas y tuplas
 
@@ -615,64 +563,258 @@ import re
 prioridaddp={"*":2,"div":2,"mod":2,"+":1,"-":1,"(":0}
 prioridadfp={"*":2,"div":2,"mod":2,"+":1,"-":1,"(":5}
 
-##def resolverLet(listaLet):
-##        variables = []
-##        while listaLet[0] != 'in': #son vals
-##                x = "".join(listaLet[0])
-##                        if x.count('[')>0 or x.count('::')>0:
-##                                variables += [listaLet[0][1],opcons(listaLet[0][
-##
-##                listaLet=listaLet[1:]
+##Recibe una lista con valores en strings y devuelve la misma lista con los valores tales y como son con eval
+def evali(l,dicc):
+    print("l: ",l)
+    y = []
+    if len(l) == 1:
+        return eval(l[0],dicc)
+    for each in l:
+        if isinstance(each,str) and each in {"true","false"}:
+            y+=[eval(each.capitalize())]
+        elif isinstance(each,list) and each[0] == '(':
+            p = each[1:]
+            p = p[:-1]
+            y+=[evali(each,dicc)]
+        elif isinstance(each,list):
+            y+=[evali(each,dicc)]
+        else:
+            y+=[(eval(each,dicc))]
+        print("y: ",y)
+    return y
 
-##def resolverIf(listaIf):
+##Recibe la lista que contiene toda la expresion If y devuelve el resultado de todo el if (lo que este en then o else, segun corresponda)
+def resolverIf(ifs):
+    ##puede ser: que vaya al then o al else
+    ## Primero: evaluar la expresion del if (boolean)
+    ##print("if: ",ifs)
+    y = ""
+    for e in ifs:
+        if isinstance(e,list):
+            y+="".join(e)
+            break
+            
+    y.replace('andalso','and',y.count('andalso'))
+    y.replace('orelse','or',y.count('orelse'))
 
+    dic = {}
+    for each in lista:
+        if not each[0] in dic:
+            dic[each[0]]=each[1]
+
+    ##resolver booleano
+    resultadoBool = eval(y,dic)
+
+    if resultadoBool: #then -> ifs[3]
+        aResolver = ifs[3]
+	print("ifs[3]: ",ifs[3])
+        #Caso es un boolean
+        if "<" in aResolver or ">" in aResolver or "orelse" in aResolver or "andalso" in aResolver:
+            q = ""
+            for e in aResolver:
+                if isinstance(e,list):
+                        q+="".join(e)
+                        break
+            q.replace('andalso','and',q.count('andalso'))
+            q.replace('orelse','or',q.count('orelse'))
+            return eval(q,dic)
+            
+        #Caso es una tupla, no resulve operaciones de #2, #1 todavia
+        elif '(' in aResolver:
+            aResolver = aResolver[1:]
+            aResolver = aResolver[:-1]
+            return tuple(evali(aResolver,dic))
+
+        #Caso es una lista
+        elif aResolver[0][0] == '[':
+	    aResolver[0] = aResolver[0][1:]
+            aResolver[-1] = aResolver[-1][:1]
+            return evali(aResolver,dic)
+        
+        #Caso es un int
+        else:
+	    print("Soy un int")
+            string = ""
+            for ea in aResolver:
+                string += ea
+            return eval(string,dic)
+        
+    else: #else -> ifs[5]
+        aResolver = ifs[5]
+        #Caso es un boolean
+        if "<" in aResolver or ">" in aResolver or "orelse" in aResolver or "andalso" in aResolver:
+            q = ""
+            for e in aResolver:
+                if isinstance(e,list):
+                        q+="".join(e)
+                        break
+            q.replace('andalso','and',q.count('andalso'))
+            q.replace('orelse','or',q.count('orelse'))
+            return eval(q,dic)
+            
+        #Caso es una tupla, no resulve operaciones de #2, #1 todavia
+        elif '(' in aResolver:
+            aResolver = aResolver[1:]
+            aResolver = aResolver[:-1]
+            return tuple(evali(aResolver,dic))
+
+        #Caso es una lista
+        elif aResolver[0][0] == '[':
+	    aResolver[0] = aResolver[0][1:]
+            aResolver[-1] = aResolver[-1][:1]
+            return evali(aResolver,dic)
+        
+        #Caso es un int
+        else:
+            string = ""
+            for ea in aResolver:
+                string += ea
+            return eval(string,dic)
+
+##Recibe la lista que contiene toda la expresion Let y devuelve el resultado de todo el let (lo que este en el in)
+##['let', ['val', 'p', '=', ['4']], 'in', ['4', '*', 'p', '+', '50']] a 66
+def resolverLet(let):
+    dic = {}
+    toResolve = []
+    siguiente = False
+    for each in let:
+        if siguiente:
+            toResolve = each
+        elif isinstance(each,list) and each[0] == 'val':
+            valResuelto = resolverVal(each)
+            dic[valResuelto[0]]=valResuelto[1]
+        elif isinstance(each,str) and each == 'in':
+            siguiente = True
+    x = "".join(toResolve)
+    esIterable = False
+    for ea in x:
+        if ea == '(':
+            esIterable = True
+            break
+        elif ea[0] == '[':
+            esIterable = True
+	    toResolve[0] = toResolve[0][1:]
+            toResolve[-1] = toResolve[-1][:1]
+            break
+    if esIterable:
+        return evali(toResolve,dic)
+    else:
+        return eval(x,dic)
+
+##Funcion que resuelve el val dentro de un let    
+def resolverVal(l):
+    for p in range(len(l)):
+        if isinstance(l[p],list) and l[p][0] not in {'val','if','let'}:
+            x = ""
+            for u in l[p]:
+                if isinstance(u,list):
+                        y = "".join(u)
+                        x += "["+y+"]"
+                else:
+                        x += u
+            if x[0] == '[': #x es lista
+                    subLista = l[p]
+                    subLista[0] = subLista[0][1:]
+                    subLista[-1] = subLista[-1][:1]
+                    print("subLista Lista = ",subLista)
+                    l[p] = evali(subLista,globales)
+                    print("After Evali = ",l[p])
+            elif x[0] == '(':
+                    subLista = l[p]
+                    subLista = subLista[1:]
+                    subLista = subLista[:-1]
+                    print("subLista Tupla = ",subLista)
+                    l[p] = tuple(evali(subLista,globales))
+                    print("After Evali = ",l[p])
+            else:
+                    if x  == 'true':
+                        l[p] = True
+                    elif x == 'false':
+                        l[p] = False
+                    else:
+                        l[p] = op(l[p])[0]
+                        l[p] = int(l[p])
+        elif isinstance(l[p],list) and l[p][0] in {'if','let'}: #es un if o un let
+            if l[p][0] == 'if':
+                l[p] = resolverIf(l[p])
+            else:
+                l[p] = resolverLet(l[p])
+    dic = []
+    dic.append(l[1])
+    print("dic[0]: ",dic[0])
+    dic.append(l[3])
+    print("dic[1]: ",dic[1])
+    return dic
+
+##Funcion que resuelve las variables y las manda a almacenarse en la lista final
 def almacenar(matriz):
         for e in range(len(matriz)):
-                print("Val: ",matriz[e])
                 tipo = ""
                 for p in range(len(matriz[e])):
-                    print("Val[p]: ",matriz[e][p])
                     if isinstance(matriz[e][p],list) and matriz[e][p][0] not in {'val','if','let'}:
-                            x = "".join(matriz[e][p])
-                            print("x: ",x)
-                            if x.count('[')>0: #x es lista
+                            largo = len(matriz[e][p])
+                            x = ""
+                            for u in matriz[e][p]:
+                                if isinstance(u,list):
+                                        y = "".join(u)
+                                        x += "["+y+"]"
+                                else:
+                                        x += u
+                            if x[0] == '[': #x es lista
+                                    subLista = matriz[e][p]
+                                    subLista[0] = subLista[0][1:]
+                                    subLista[-1] = subLista[-1][:1]
+                                    print("subLista Lista = ",subLista)
+                                    matriz[e][p] = evali(subLista,globales)
+                                    print("After Evali = ",matriz[e][p])
                                     tipo = analizador_lista(matriz[e][p])
-                            elif x.count('(')>0:
-                                    tipo = analizador_tupla(matriz[e][p])
+                                    print("After tipo = ",tipo)
+                            elif x[0] == '(':
+                                    subLista = matriz[e][p]
+                                    subLista = subLista[1:]
+                                    subLista = subLista[:-1]
+                                    print("subLista Tupla = ",subLista)
+                                    matriz[e][p] = tuple(evali(subLista,globales))
+                                    print("After Evali = ",matriz[e][p])
+				    print("list(matriz[e][p]) = ",list(matriz[e][p]))
+                                    tipo = analizador_tupla(list(matriz[e][p]))
+                                    print("After tipo = ",tipo)
                             else:
-                                    matriz[e][p] = op(matriz[e][p])[0]
-                                    tipo = 'int'
+                                    if x  == 'true':
+                                        tipo = "Boolean"
+                                        matriz[e][p] = True
+                                    elif x == 'false':
+                                        tipo = "Boolean"
+                                        matriz[e][p] = False
+                                    else:
+                                        matriz[e][p] = op(matriz[e][p])[0]
+                                        matriz[e][p] = int(matriz[e][p])
+                                        tipo = 'int'
+                    elif isinstance(matriz[e][p],list) and matriz[e][p][0] in {'val','if','let'}: #es un if o un let
+                        if matriz[e][p][0] == 'if':
+                            matriz[e][p] = resolverIf(matriz[e][p])
+			    print("type(matriz[e][p]): ",type(matriz[e][p]))
+                            tipo = str(type(matriz[e][p]))[7:-2]
+			    if tipo == 'list':
+				    tipo = analizador_lista(matriz[e][p])
+			    elif tipo == 'tuple':
+				    tipo = analizador_tupla(matriz[e][p])
+			    elif tipo == 'bool':
+				    tipo = 'Boolean'
+                        else:
+                            matriz[e][p] = resolverLet(matriz[e][p])
+			    print("type(matriz[e][p]): ",type(matriz[e][p]))
+                            tipo = str(type(matriz[e][p]))[7:-2]
+			    if tipo == 'list':
+				    tipo = analizador_lista(matriz[e][p])
+			    elif tipo == 'tuple':
+				    tipo = analizador_tupla(list(matriz[e][p]))
+			    elif tipo == 'bool':
+				    tipo = 'Boolean'
+			    
                 agregardatos(matriz[e][1],matriz[e][3],tipo,'global',tipo)
-                print("Lista: ",lista)
-                        
-##def almacenar(matriz):
-####    print("MatrizEntrante: ",matriz)
-##    for e in range(len(matriz)):
-####        print("Val: ",matriz[e])
-##        for p in range(len(matriz[e])):
-####            print("Val[p]: ",matriz[e][p])
-##            if isinstance(matriz[e][p],list) and matriz[e][p][0] not in {'val','if','let'}:
-##                x = "".join(matriz[0])
-##                if x.count('[') > 0 or x.count('::')>0:
-##                        paraOpCons = True
-##                else:
-##                        paraOp = True
-##                if paraOpCons:
-##                        for e in range(len(matriz[0])):
-##                                if matriz[0][e] == 'hd': #solo con 1 nivel de anidacion
-##                                        matriz[0] = opcons(matriz[0])[0]
-####                                        if matriz[0][e+1].isalpha(): #accede a una variabla
-####                                                matriz[0][e]=
-##                else:
-##                        matriz[e][p] = op(matriz[e][p])[0]
-####                print("Val[p] Nueva: ",matriz[e][p])
-##            elif matriz[e][p][0] == 'let':
-##                matriz[e][p] = resolverLet(matriz[e][p])
-##            elif matriz[e][p][0] == 'if':
-##                matriz[e][p] = resolverIf(matriz[e][p])    
-####        print("Val: ",matriz[e])
-##        agregardatos(matriz[e][1],int(matriz[e][3]),'int','global','int')
-####        print("Lista: ",lista)
+                global globales
+                globales[matriz[e][1]] = matriz[e][3]
 
 #Inserta datos al inicio de la lista.  
 def agregardatos(variable,valor,tipo,scope,tipo2):
@@ -915,10 +1057,10 @@ def analizador_lista(Lllista):
      Lllista =str(Lllista)
      Llista = eval(Lllista)
      if Llista==[]:
-          return ("list")
-     elif isinstance (ConvertirInt(Llista[0]),int)or verificar_int(Llista[0]):
+          return ("a' list")
+     elif isinstance(Llista[0],int) or isinstance (ConvertirInt(Llista[0]),int)or verificar_int(Llista[0]):
           return ("int list")
-     elif Llista[0]=="false" or Llista[0]=="true" or verificar_bool(Llista[0]):
+     elif Llista[0]=="false" or Llista[0]=="true" or Llista[0]=="False" or Llista[0]=="True" or Llista[0]==False or Llista[0]==True or verificar_bool(Llista[0]):
           return ("bool list")
      elif isinstance(Llista[0],list):
           return (analizador_lista(Llista[0])+" list")
@@ -935,12 +1077,14 @@ def analizador_lista(Lllista):
           
 # Hacer un verificador que me permita si tengo val x, tal que x es una lista, y si esta x esta en una tupla, yo poder colocar el valor y reconocerlo.
 def analizador_tupla(Ttupla):
+##     print("Ttupla: ",Ttupla)
      if len(Ttupla)==0:
           return ("()")
      respuesta="("
-     if isinstance (ConvertirInt(Ttupla[0]),int)or verificar_int(Ttupla[0]):
+     print("Ttupla[0]= ",Ttupla[0])
+     if (isinstance(Ttupla[0],int) or isinstance(ConvertirInt(Ttupla[0]),int) or verificar_int(Ttupla[0])) and not (Ttupla[0]==False or Ttupla[0]==True):
           respuesta=respuesta+"int"     
-     elif Ttupla[0]=="false" or Ttupla[0]=="true" or verificar_bool(Ttupla[0]):
+     elif Ttupla[0]=="false" or Ttupla[0]=="true" or Ttupla[0]=="False" or Ttupla[0]=="True" or Ttupla[0]==False or Ttupla[0]==True or verificar_bool(Ttupla[0]):
           respuesta=respuesta+"bool"
      elif isinstance (Ttupla[0],list):
           respuesta=respuesta+analizador_lista(Ttupla[0])
@@ -950,11 +1094,14 @@ def analizador_tupla(Ttupla):
           respuesta=respuesta+analizador_tupla(Ttupla[0])
      elif verificar_tuple(Ttupla[0]): # Si la tupla esta encapsulada en una variable establecida
           respuesta=respuesta+(obtener_tipo(Ttupla[0]))
-          
+     print("respuesta = ",respuesta)
+##
+##     print("Ttupla[1:]: ",Ttupla[1:])
      for e in Ttupla[1:]:
-          if isinstance (ConvertnirInt(e),int):
+	  print("e= ",e)
+          if (isinstance(e,int) or isinstance (ConvertirInt(e),int) or verificar_int(e)) and not (e==False or e==True):
                respuesta=respuesta+"*int"
-          elif e=="false" or e=="true":
+          elif e==False or e==True or e=="false" or e=="true" or e=="False" or e=="True" or verificar_bool(e):
                respuesta=respuesta+"*bool"
           elif isinstance (e,list):
                respuesta=respuesta+"*"+analizador_lista(e)
@@ -964,12 +1111,13 @@ def analizador_tupla(Ttupla):
                respuesta=respuesta+"*"+analizador_tupla(e)
           elif verificar_tuple(e): # Si la tupla esta encapsulada en una variable establecida
                respuesta=respuesta+"*"+(obtener_tipo(e))
+	  print("respuesta = ",respuesta)
      respuesta+=")"
      return respuesta
 
 # Verificar si la variable es un int y esta esta almacenada en el ambiente
 def verificar_int(valor):
-     print("Verificarint: ",valor)
+##     print("Verificarint: ",valor)
      if lista==[]:
           return False
 
@@ -1017,7 +1165,7 @@ def obtener_tipo(valor):
 
 #Obtener el valor del dato almacenado en la lista siempre y cuando sean GLOBALES
 def obtener(valor):
-     print("Obtener valor de: ",valor)
+##     print("Obtener valor de: ",valor)
      for e in lista:
           print("e in lista: ",e)
           if e[0]==valor and e[3]=="global":
@@ -1043,20 +1191,15 @@ def caractercons(le1,le2):
                return le1+[le2]
           elif isinstance(le1,list) and isinstance(le2,list):
                return le1+le2
-            
 
-#def esLista(lista):
-	#lista es un string que puede o no ser una lista
-	#if lista[0] == '['
-#def esTupla(tupla):
 
 #----------------------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------			MAIN				-----------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------------------------------------
-
-#main de la aplicacion
+##
+##main de la aplicacion
 if __name__ == '__main__':
 	#app.debug = True
-	app.run(host='192.168.0.7') #CAMBIAR ESTE IP POR EL ACTUAL
+	app.run(host='192.168.0.8') #CAMBIAR ESTE IP POR EL ACTUAL
